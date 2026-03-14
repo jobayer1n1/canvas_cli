@@ -1,0 +1,67 @@
+from pathlib import Path
+import os
+import json
+from canvasapi.exceptions import InvalidAccessToken
+
+
+class LocalAppData:
+    def __init__(self):
+        self.app_dir = Path(os.environ["LOCALAPPDATA"]) / "canvas-cli"
+        self.app_dir.mkdir(parents=True, exist_ok=True)
+        self.user_data = self.app_dir / "user_data.txt"
+        self.sync_directory = self.app_dir / "sync_directory.txt"
+        self.ignore_list = self.app_dir / "ignore_list.txt"
+
+
+
+    def save_user_data(self, user_data_to_add: dict[str, str]):
+        self.user_data.write_text(json.dumps(user_data_to_add), encoding="utf-8")
+
+
+    def get_user_data(self):
+        if self.user_data.exists():
+            return json.loads(self.user_data.read_text(encoding="utf-8"))
+        return None
+    
+    def delete_user_data(self):
+        if self.user_data.exists():
+            self.user_data.unlink()
+            return True
+        return False
+    
+    def is_valid(self):
+        from api.canvas import get_api
+
+        api = get_api()
+        if api is None or api.check_credentials() is None:
+            return False
+        return True
+        
+    def get_sync_directory(self):
+        if self.sync_directory.exists():
+            return json.loads(self.sync_directory.read_text(encoding="utf-8"))
+        return None
+    def set_sync_directory(self, sync_directory: dict[str, str]):
+        self.sync_directory.write_text(json.dumps(sync_directory), encoding="utf-8")
+        return
+    def delete_sync_directory(self):
+        if self.sync_directory.exists():
+            self.sync_directory.unlink()
+            return True
+        return False
+    
+    def set_ignore_list(self, ignore_list_to_add: dict[str,list[str]]):
+        self.ignore_list.write_text(json.dumps(ignore_list_to_add), encoding="utf-8")
+        return True
+    def get_ignore_list(self):
+        if self.ignore_list.exists():
+            return json.loads(self.ignore_list.read_text(encoding="utf-8"))
+        return None
+    def delete_ignore_list(self):
+        if self.ignore_list.exists():
+            self.ignore_list.unlink()
+            return True
+        return False
+
+    
+   
