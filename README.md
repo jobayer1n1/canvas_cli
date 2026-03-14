@@ -26,4 +26,4 @@ python canvas.py -filesync
 python canvas.py -modulesync
 ```
 
-If you run the CLI with no arguments, it will guide you to log in or show the available commands once you’re authenticated.
+---
