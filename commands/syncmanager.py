@@ -55,6 +55,12 @@ eg: > 'BIO103.1'
                         break
                     elif course=="b":
                         break
+                    elif course not in available_courses_names:
+                        print("Invalid course name")
+                        continue
+                    elif course in ignore_list:
+                        print("Course already in ignore list")
+                        continue
                     else:
                         ignore_list.append(course.capitalize())
                         jsonified_ignore_list = {
