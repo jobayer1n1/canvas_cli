@@ -63,5 +63,11 @@ class LocalAppData:
             return True
         return False
 
+    def reset_all(self):
+        self.delete_user_data()
+        self.delete_sync_directory()
+        self.delete_ignore_list()
+        return True
+
     
    

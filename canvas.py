@@ -48,6 +48,8 @@ def build_parser() -> argparse.ArgumentParser:
         "announcements": ["-a"],
         "filesync": ["-fs"],
         "syncmanager": ["-sm"],
+        "modulesync": ["-ms"],
+        "reset": ["-r"],
     }
 
     commands = discover_commands()
