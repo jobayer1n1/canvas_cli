@@ -11,6 +11,7 @@ class LocalAppData:
         self.user_data = self.app_dir / "user_data.txt"
         self.sync_directory = self.app_dir / "sync_directory.txt"
         self.ignore_list = self.app_dir / "ignore_list.txt"
+        self.course_index = self.app_dir / "course_index.txt"
 
 
 
@@ -63,10 +64,26 @@ class LocalAppData:
             return True
         return False
 
+    def set_course_index(self, course_index_to_add: dict):
+        self.course_index.write_text(json.dumps(course_index_to_add), encoding="utf-8")
+        return True
+
+    def get_course_index(self):
+        if self.course_index.exists():
+            return json.loads(self.course_index.read_text(encoding="utf-8"))
+        return None
+
+    def delete_course_index(self):
+        if self.course_index.exists():
+            self.course_index.unlink()
+            return True
+        return False
+
     def reset_all(self):
         self.delete_user_data()
         self.delete_sync_directory()
         self.delete_ignore_list()
+        self.delete_course_index()
         return True
 
     

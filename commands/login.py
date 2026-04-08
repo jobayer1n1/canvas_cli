@@ -1,7 +1,4 @@
-from pathlib import Path
-import os
-from canvasapi.exceptions import InvalidAccessToken
-from api.canvasObj import get_canvas
+from api.canvas import CanvasAPI
 from utils.localAppData import LocalAppData
 
 HELP ="log in to your canvas account using API token"
@@ -21,14 +18,9 @@ def main(argv: list[str]) -> None:
     else:
         API_TOKEN = argv[0]
     
-    canvas = get_canvas(API_TOKEN)
-    try:
-        user = canvas.get_current_user()
-    except InvalidAccessToken:
+    user = CanvasAPI.authenticate_token(API_TOKEN)
+    if user is None:
         print("Invalid API TOKEN")
-        return
-    except Exception as e:
-        print(f"Something went wrong")
         return
 
     user_data = {

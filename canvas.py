@@ -46,9 +46,10 @@ def build_parser() -> argparse.ArgumentParser:
         "help": ["-h"],
         "courses": ["-c"],
         "announcements": ["-a"],
-        "filesync": ["-fs"],
+        "filesync": ["-fs", "--fs"],
+        "fetch": ["-f"],
         "syncmanager": ["-sm"],
-        "modulesync": ["-ms"],
+        "modulesync": ["-ms", "--ms"],
         "reset": ["-r"],
     }
 

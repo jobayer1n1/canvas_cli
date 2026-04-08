@@ -1,5 +1,4 @@
 from api.canvas import get_api
-from utils.localAppData import LocalAppData
 
 
 HELP = "get all your announcements"
@@ -12,6 +11,6 @@ def main(argv: list[str],course_id: int = None) -> None:
     announcements = api.get_all_courses_announcements()
     for announcement in announcements:
         course_id = announcement.context_code.replace("course_", "")
-        course = api.canvas.get_course(course_id)
+        course = api.get_course_by_id(course_id)
         print(course.name.split(" ")[0]+": "+announcement.title +" [" +announcement.posted_at+"]")
     return
