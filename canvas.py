@@ -93,19 +93,19 @@ def main() -> None:
 
     if not command:
         print("No command provided.")
-        print("Try: python app.py -help")
+        print("Try: canvas --help")
         return
 
     if not LocalAppData().is_valid() and command != "login" and command != "help":
         print("Please log in first")
-        print("Try: python app.py -login")
+        print("Try: canvas --login")
         return
         
     
     try:
         if not run_command(command, argv):
             print(f"Unknown command: {command}")
-            print("Try: python app.py -help")
+            print("Try: canvas --help")
     except KeyboardInterrupt:
         print("\nExiting...")
 
