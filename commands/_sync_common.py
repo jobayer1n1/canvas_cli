@@ -125,7 +125,7 @@ def prepare_sync(argv: list[str]):
     if missing_queries:
         for missing in sorted(set(missing_queries)):
             print(
-                f"{missing} is not in your enrollment list. use -fetch to update the enrollment course list"
+                f"{missing} is not in your enrollment list. use --fetch to update the enrollment course list"
             )
         return None
 
@@ -136,7 +136,7 @@ def prepare_sync(argv: list[str]):
             target_courses.append(course)
 
     if not target_courses:
-        print("No requested courses are currently active. use -fetch to update the enrollment course list")
+        print("No requested courses are currently active. use --fetch to update the enrollment course list")
         return None
 
     pretty_codes = ", ".join(sorted(requested_target_codes))
