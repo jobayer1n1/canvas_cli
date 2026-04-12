@@ -41,16 +41,17 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(add_help=False)
 
     aliases = {
-        "login": ["-li"],  
-        "logout": ["-lo"],
-        "help": ["-h"],
-        "courses": ["-c"],
-        "announcements": ["-a"],
-        "filesync": ["-fs", "--fs"],
-        "fetch": ["-f"],
-        "syncmanager": ["-sm"],
-        "modulesync": ["-ms", "--ms"],
-        "reset": ["-r"],
+        "login": ["-li", "--login"],  
+        "logout": ["-lo", "--logout"],
+        "help": ["-h", "--help"],
+        "courses": ["-c", "--courses"],
+        "announcements": ["-a", "--announcements"],
+        "filesync": ["-fs", "--filesync"],
+        "fetch": ["-f", "--fetch"],
+        "syncmanager": ["-sm", "--syncmanager"],
+        "modulesync": ["-ms", "--modulesync"],
+        "reset": ["-r", "--reset"],
+        "open": ["-o", "--open"],
     }
 
     commands = discover_commands()
