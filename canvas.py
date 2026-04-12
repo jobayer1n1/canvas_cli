@@ -76,13 +76,13 @@ def main() -> None:
         if api is None or api.check_credentials() is None:
             print("""
                 Thanks for using canvas-cli
-                Try: python app.py -login to log in to your canvas account
+                Try: canvas -login to log in to your canvas account
                 """)
         else:
             name = LocalAppData().get_user_data()["NAME"]
             print(f"""
                 Welcome back {name}!!!
-                Try: python app.py -help to see all commands
+                Try: canvas -help to see all commands
                 """)
         return
 
