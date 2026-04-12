@@ -56,7 +56,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     commands = discover_commands()
     for cmd in commands:
-        option_strings = [f"-{cmd}"] + aliases.get(cmd, [])
+        option_strings = [f"--{cmd}"] + aliases.get(cmd, [])
+        option_strings = list(dict.fromkeys(option_strings))
+        
         parser.add_argument(
             *option_strings,
             action="store_const",
