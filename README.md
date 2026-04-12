@@ -17,16 +17,10 @@
 **Quick Start**
 
 * Create New Canvas Access Token From : <a>https://northsouth.instructure.com/profile/settings</a>
+* run `canvas -li` and paste the token to log in
+* Use Available Cmds
 
 ***To access canvas-cli from anywhere add canvas_cli directory to your PATH***
-```bash
-canvas --help
-canvas --login
-canvas --syncmanager
-canvas --filesync
-canvas --modulesync
-canvas --open
-```
 
 ---
 
