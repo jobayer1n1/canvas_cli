@@ -42,9 +42,9 @@ Here is the complete list of available instructions and their shortcuts:
 | `canvas --courses` | `-c` | Get all your enrolled courses |
 | `canvas --announcements` | `-a` | Get all your announcements |
 | `canvas --fetch` | `-f` | Fetch and refresh local Canvas enrollment metadata |
-| `canvas --syncmanager` | `-sm` | Configure the standard syncing directory |
-| `canvas --filesync [courses...]` | `-fs` | Syncs all (or specified) course files to your local directory |
-| `canvas --modulesync [courses...]`| `-ms` | Syncs all (or specified) course modules to your local directory |
+| `canvas --syncmanager` | `-sm` | Configure the syncing directory and course ignorelist |
+| `canvas --filesync [courses...]` | `-fs` | Syncs all not ignored (or specified) course files to your local directory |
+| `canvas --modulesync [courses...]`| `-ms` | Syncs all not ignored (or specified) course modules to your local directory |
 | `canvas --open` | `-o` | Opens the local Canvas sync directory |
 | `canvas --reset` | `-r` | Reset all configurations and data |
 
@@ -54,5 +54,8 @@ To sync only specific courses, you can pass their names or codes as arguments:
 canvas --filesync CSE331 PHY107
 canvas --modulesync ENG103
 ```
+
+**Using the Ignorelist:**
+You can interactively configure an **Ignorelist** using the `canvas --syncmanager` command. When you have courses added to your ignorelist, running `canvas --filesync` or `canvas --modulesync` without any arguments will sync **all enrolled courses EXCEPT the ones on your ignorelist**.
 
 ---
