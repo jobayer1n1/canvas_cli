@@ -89,7 +89,7 @@ def prepare_sync(argv: list[str]):
     app_data = LocalAppData()
     directory_settings = app_data.get_sync_directory()
     if not directory_settings:
-        print("Syncing directory has not been set. Try: syncmanager")
+        print("Syncing directory has not been set. Try: canvas --syncmanager")
         return None
 
     sync_base = Path(directory_settings["directory"]) / "Canvas"
@@ -100,19 +100,27 @@ def prepare_sync(argv: list[str]):
         print("Please log in first.")
         return None
 
-    try:
-        courses = list(api.get_all_courses())
-    except Exception as e:
-        print(f"Failed to fetch courses: {e}")
+    local_index = app_data.get_course_index()
+    if not local_index or "courses" not in local_index:
+        print("No local course metadata found. Please run: canvas --fetch")
         return None
 
     ignore_set = get_ignore_set(app_data)
+
+    from canvasapi.course import Course
+    courses = []
+    for cd in local_index["courses"]:
+        c_dict = {
+            "id": int(cd["id"]),
+            "name": cd.get("name", ""),
+            "course_code": cd.get("token", "")
+        }
+        courses.append(Course(api.canvas._Canvas__requester, c_dict))
 
     queries = [item.strip() for item in argv if item.strip()]
     if not queries:
         return api, sync_base, courses, ignore_set, None
 
-    local_index = app_data.get_course_index()
     requested_target_codes: set[str] = set()
     missing_queries: list[str] = []
     for query in queries:
@@ -144,20 +152,19 @@ def prepare_sync(argv: list[str]):
     return api, sync_base, target_courses, ignore_set, queries
 
 
-def sync_file(canvas_file, local_path: Path):
+def sync_file(canvas_file, local_path: Path) -> str:
     if local_path.exists():
         local_size = local_path.stat().st_size
 
         if local_size == canvas_file.size:
             print(f"  [Skipped] {canvas_file.display_name} (Up to date)")
-            return
+            return "skipped"
         if local_size < canvas_file.size:
-            perform_download(canvas_file, local_path, resume=True)
-            return
-    perform_download(canvas_file, local_path, resume=False)
+            return perform_download(canvas_file, local_path, resume=True)
+    return perform_download(canvas_file, local_path, resume=False)
 
 
-def perform_download(canvas_file, local_path: Path, resume: bool = False):
+def perform_download(canvas_file, local_path: Path, resume: bool = False) -> str:
     headers = {}
     mode = "wb"
     verb = "Downloading"
@@ -184,6 +191,8 @@ def perform_download(canvas_file, local_path: Path, resume: bool = False):
                         f.write(chunk)
 
         print("[Done]")
+        return "downloaded"
 
     except Exception as e:
         print(f"Failed: {e}")
+        return "error"

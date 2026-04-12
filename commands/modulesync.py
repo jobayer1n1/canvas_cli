@@ -15,6 +15,8 @@ def main(argv: list[str]) -> None:
 
     api, sync_base, courses, ignore_set, queries = context
 
+    stats = {"downloaded": 0, "skipped": 0, "error": 0}
+
     for course in courses:
         course_name = getattr(course, "name", f"Course_{course.id}")
         safe_course_name = sanitize_name(course_name)
@@ -40,22 +42,26 @@ def main(argv: list[str]) -> None:
                                 continue
                             safe_file_name = sanitize_name(file.display_name)
                             file_path = module_dir / safe_file_name
-                            sync_file(file, file_path)
+                            status = sync_file(file, file_path)
+                            if status in stats:
+                                stats[status] += 1
                         except Exception as e:
                             print(f"      [Error] Could not get file details for {item.title}: {e}")
+                            stats["error"] += 1
 
                     elif item.type == 'ExternalUrl':
                         print(f"      [Link] {item.title}: {item.external_url}")
 
-        except Unauthorized:
-            print(f"Access Denied for {course_name} modules.")
-        except Exception as e:
-            print(f"Error syncing {course_name}: {e}")
+        except (Unauthorized, Exception) as e:
+            if type(e).__name__ in ("Unauthorized", "ResourceDoesNotExist", "Forbidden"):
+                print(f"Access Denied for {course_name} modules. It may have expired.")
+                print(f"Please run `canvas --fetch` to update your enrollment list and skip this automatically.")
+            else:
+                print(f"Error syncing {course_name}: {e}")
 
+    summary = f"Overview: {stats['downloaded']} downloaded | {stats['skipped']} skipped | {stats['error']} errors."
     if queries:
-        print(
-            "\nFinished syncing modules for requested courses: "
-            + ", ".join(queries)
-        )
+        print(f"\nFinished syncing modules for requested courses: {', '.join(queries)}")
     else:
         print("\nFinished syncing all modules.")
+    print(summary)

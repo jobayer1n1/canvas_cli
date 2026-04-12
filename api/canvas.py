@@ -52,34 +52,20 @@ class CanvasAPI:
         return []
 
     def get_course_files(self, course: int | str | Course):
-        try:
-            if isinstance(course, Course):
-                target_course = course
-            else:
-                target_course = self.canvas.get_course(course)
-            files = target_course.get_files()
-            return files
-        except Unauthorized:
-            print(f"Error: Not authorized to access files for course {getattr(course, 'name', course)}.")
-            return []
-        except ResourceDoesNotExist:
-            print(f"Error: Course {getattr(course, 'course_code', course)} not found.")
-        return []
+        if isinstance(course, Course):
+            target_course = course
+        else:
+            target_course = self.canvas.get_course(course)
+        files = target_course.get_files()
+        return files
 
     def get_course_modules(self, course: int | str | Course):
-        try:
-            if isinstance(course, Course):
-                target_course = course
-            else:
-                target_course = self.canvas.get_course(course)
-            modules = target_course.get_modules()
-            return modules
-        except Unauthorized:
-            print(f"Error: Not authorized to access modules for course {getattr(course, 'name', course)}.")
-            return []
-        except ResourceDoesNotExist:
-            print(f"Error: Course {getattr(course, 'course_code', course)} not found.")
-        return []
+        if isinstance(course, Course):
+            target_course = course
+        else:
+            target_course = self.canvas.get_course(course)
+        modules = target_course.get_modules()
+        return modules
 
     def get_module_items(self, module: Module):
         try:

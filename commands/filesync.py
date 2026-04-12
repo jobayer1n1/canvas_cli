@@ -16,6 +16,8 @@ def main(argv: list[str]) -> None:
 
     api, sync_base, courses, ignore_set, queries = context
 
+    stats = {"downloaded": 0, "skipped": 0, "error": 0}
+
     for course in courses:
         course_name = getattr(course, "name", f"Course_{course.id}")
         if is_ignored(course, ignore_set):
@@ -32,17 +34,20 @@ def main(argv: list[str]) -> None:
             for file in files:
                 safe_file_name = sanitize_name(file.display_name)
                 file_path = files_dir / safe_file_name
-                sync_file(file, file_path)
+                status = sync_file(file, file_path)
+                if status in stats:
+                    stats[status] += 1
 
-        except Unauthorized:
-            print(f"Access Denied: You don't have permission for {course_name} files.")
-        except Exception as e:
-            print(f"Error syncing {course_name}: {e}")
+        except (Unauthorized, Exception) as e:
+            if type(e).__name__ in ("Unauthorized", "ResourceDoesNotExist", "Forbidden"):
+                print(f"Access Denied: You don't have permission for {course_name} files, or it may have expired.")
+                print(f"Please run `canvas --fetch` to update your enrollment list and skip this automatically.")
+            else:
+                print(f"Error syncing {course_name}: {e}")
 
+    summary = f"Overview: {stats['downloaded']} downloaded | {stats['skipped']} skipped | {stats['error']} errors."
     if queries:
-        print(
-            "\nFinished syncing files for requested courses: "
-            + ", ".join(queries)
-        )
+        print(f"\nFinished syncing files for requested courses: {', '.join(queries)}")
     else:
         print("\nFinished syncing all courses.")
+    print(summary)
