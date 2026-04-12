@@ -1,4 +1,4 @@
-## canvas-cli
+# canvas-cli
 
 `canvas-cli` is a small command-line tool for working with your NSU Canvas account. It lets you sync course files, modules with you local computer and has some daily usage canvas commands.
 
@@ -30,7 +30,7 @@ canvas --open
 
 ---
 
-**Available Commands**
+# Available Commands
 
 Here is the complete list of available instructions and their shortcuts:
 
@@ -48,14 +48,25 @@ Here is the complete list of available instructions and their shortcuts:
 | `canvas --open` | `-o` | Opens the local Canvas sync directory |
 | `canvas --reset` | `-r` | Reset all configurations and data |
 
-**Example:**
+## Using -fs or -ms
 To sync only specific courses, you can pass their names or codes as arguments:
 ```bash
 canvas --filesync CSE331 PHY107
 canvas --modulesync ENG103
 ```
 
-**Using the Ignorelist:**
+## Using the Ignorelist:
+
 You can interactively configure an **Ignorelist** using the `canvas --syncmanager` command. When you have courses added to your ignorelist, running `canvas --filesync` or `canvas --modulesync` without any arguments will sync **all enrolled courses EXCEPT the ones on your ignorelist**.
+
+
+## Using `--open` cmd:
+
+Works for both files and modules.
+| Command | Function | Example |
+| :--- | :--- | :---|
+| `-o CourseName` | open a specific course folder | -o MAT361 |
+| `-o CourseName -m` | open that course modules | -o MAT361 -m |
+| `-o CourseName -m {arg}` | open modules/{arg} | -o MAT361 -m week1 |
 
 ---
