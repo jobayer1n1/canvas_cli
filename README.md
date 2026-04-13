@@ -1,6 +1,6 @@
 # canvas-cli
 
-`canvas-cli` is a small command-line tool for your NSU Canvas account. It lets you sync course files, modules with you local computer and has some useful commands.
+`canvas-cli` is a small command-line tool for your NSU Canvas account. It lets you sync course files, modules with your local computer and has some useful commands.
 
 ---
 
