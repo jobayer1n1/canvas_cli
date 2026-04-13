@@ -1,10 +1,12 @@
 from utils.localAppData import LocalAppData
 from api.canvas import get_api
 from pathlib import Path
+import os,time
 
 HELP="syncing config"
 
 def main(argv: list[str]) -> None:
+    os.system("cls")
     api = get_api()
     if api is None:
         print("Please log in first")
@@ -20,16 +22,14 @@ def main(argv: list[str]) -> None:
         
     while True:
         directory = Path(LocalAppData().get_sync_directory()["directory"]) / "Canvas"
-        ignore_list = LocalAppData().get_ignore_list()
         print(f"""
 Syncing directory: {directory}
-Ignore list: {ignore_list}
 > 'i' to modify ignore list
 > 'c' to change directory
 > 'q' to quit
               """)
         try:
-            cmd = input("> ")
+            cmd = input("sm> ")
             if(cmd=="c"):
                 directory=choose_folder()
                 if directory==None:
@@ -37,36 +37,42 @@ Ignore list: {ignore_list}
                     continue
                 LocalAppData().set_sync_directory({"directory":directory})
             elif(cmd=="i"):
-                ignore_list=[]
-                print(f"""
-{available_courses_names}
+                os.system("cls")
+                while True:
+                    ignore_list=LocalAppData().get_ignore_list()
+                    ignore_list_str = ", ".join(ignore_list)
+                    available_courses_names_str = ", ".join(available_courses_names)
+                    print(f"""
+Enrolled Courses: {available_courses_names_str}
+Ignored Courses: {ignore_list_str}
+
 Enter course name with section which u dont wanna sync
-eg: > 'BIO103.1'
+eg: > BIO103.1
 >'b' to go back
 >'r' to reset ignore list
 >'q' to quit                                        
 """)
-                while True:
-                    course = input("> ")
+                    course = input("sm/i> ").lower()
                     if course=="q":
                         return
                     elif course=="r":
                         LocalAppData().delete_ignore_list()
                         break
                     elif course=="b":
+                        os.system("cls")
                         break
-                    elif course not in available_courses_names:
+                    elif course.upper() not in available_courses_names:
                         print("Invalid course name")
                         continue
-                    elif course in ignore_list:
+                    elif course.upper() in ignore_list:
                         print("Course already in ignore list")
                         continue
                     else:
-                        ignore_list.append(course.capitalize())
-                        jsonified_ignore_list = {
-                            "ignore_list":ignore_list
-                        }
-                        LocalAppData().set_ignore_list(jsonified_ignore_list)
+                        LocalAppData().add_to_ignore_list(course)
+                        print("Course added to ignore list")
+                        time.sleep(1)
+                        os.system("cls")
+                        continue
                    
 
             elif(cmd=="q"):

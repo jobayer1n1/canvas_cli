@@ -50,13 +50,31 @@ class LocalAppData:
             self.sync_directory.unlink()
             return True
         return False
-    
+
     def set_ignore_list(self, ignore_list_to_add: dict[str,list[str]]):
         self.ignore_list.write_text(json.dumps(ignore_list_to_add), encoding="utf-8")
         return True
+
+    def add_to_ignore_list(self, course_to_add: str):
+        ignore_list = self.get_ignore_list()
+        if ignore_list is None:
+            ignore_list = []
+        ignore_list.append(course_to_add.upper())
+        self.set_ignore_list({"ignore_list":ignore_list})
+        return True
+    
+    def remove_from_ignore_list(self, course_to_remove: str):
+        ignore_list = self.get_ignore_list()
+        if ignore_list is None:
+            ignore_list = []
+        ignore_list.remove(course_to_remove.upper())
+        self.set_ignore_list({"ignore_list":ignore_list})
+        return True
+
     def get_ignore_list(self):
         if self.ignore_list.exists():
-            return json.loads(self.ignore_list.read_text(encoding="utf-8"))
+            json_dump = json.loads(self.ignore_list.read_text(encoding="utf-8"))
+            return json_dump["ignore_list"]
         return None
     def delete_ignore_list(self):
         if self.ignore_list.exists():
