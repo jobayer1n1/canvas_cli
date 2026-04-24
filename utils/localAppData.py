@@ -72,10 +72,30 @@ class LocalAppData:
         return True
 
     def get_ignore_list(self):
-        if self.ignore_list.exists():
+        if not self.ignore_list.exists():
+            return []
+
+        try:
             json_dump = json.loads(self.ignore_list.read_text(encoding="utf-8"))
-            return json_dump["ignore_list"]
-        return None
+        except (json.JSONDecodeError, OSError):
+            return []
+
+        # Backward-compatible parsing: support both {"ignore_list": [...]} and raw list payloads.
+        if isinstance(json_dump, dict):
+            ignore_list = json_dump.get("ignore_list", [])
+        else:
+            ignore_list = json_dump
+
+        if ignore_list is None:
+            return []
+
+        if isinstance(ignore_list, (list, tuple, set)):
+            return [str(course).upper() for course in ignore_list if course is not None]
+
+        if isinstance(ignore_list, str):
+            return [ignore_list.upper()]
+
+        return []
     def delete_ignore_list(self):
         if self.ignore_list.exists():
             self.ignore_list.unlink()

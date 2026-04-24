@@ -23,10 +23,11 @@ def main(argv: list[str]) -> None:
     while True:
         directory = Path(LocalAppData().get_sync_directory()["directory"]) / "Canvas"
         print(f"""
+--- Sync Manager ---
 Syncing directory: {directory}
-> 'i' to modify ignore list
-> 'c' to change directory
-> 'q' to quit
+> i : modify ignore list
+> c : change directory
+> q : quit
               """)
         try:
             cmd = input("sm> ")
