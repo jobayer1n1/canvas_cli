@@ -1,10 +1,58 @@
-#!/usr/bin/env python3
+#!/home/jobayer/canvas_cli/.venv/bin/python3
 from __future__ import annotations
 
 import argparse
 import importlib
 import sys
+import os
 from pathlib import Path
+
+# --- Dependency Check ---
+def check_dependencies():
+    missing_pip = []
+    tkinter_missing = False
+
+    # Check for PyPI packages
+    try:
+        import canvasapi
+    except ImportError:
+        missing_pip.append("canvasapi")
+    
+    try:
+        import requests
+    except ImportError:
+        missing_pip.append("requests")
+
+    # Check for Tkinter (System package on Linux)
+    try:
+        import tkinter
+    except ImportError:
+        tkinter_missing = True
+
+    if missing_pip or tkinter_missing:
+        print("--- Missing Dependencies Detected ---")
+        
+        if missing_pip:
+            print(f"The following Python packages are missing: {', '.join(missing_pip)}")
+            if sys.platform == "win32":
+                print("Action: Run 'pip install -r requirements.txt'")
+            else:
+                print("Action: Run 'pip3 install -r requirements.txt'")
+            print("-" * 30)
+
+        if tkinter_missing:
+            if sys.platform == "linux":
+                print("Tkinter is missing (required for folder selection).")
+                print("Action: Run 'sudo apt update && sudo apt install python3-tk'")
+            else:
+                print("Tkinter is missing. Please reinstall Python and ensure 'Tcl/Tk' is checked.")
+            print("-" * 30)
+        
+        sys.exit(1)
+
+# Run the check immediately
+check_dependencies()
+# ------------------------
 
 from api.canvas import get_api
 from utils.localAppData import LocalAppData
@@ -72,7 +120,6 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-
 def main() -> None:
     if len(sys.argv) == 1:
         api = get_api()
@@ -82,7 +129,8 @@ def main() -> None:
                 Try: canvas --login to log in to your canvas account
                 """)
         else:
-            name = LocalAppData().get_user_data()["NAME"]
+            user_data = LocalAppData().get_user_data()
+            name = user_data["NAME"] if user_data else "User"
             print(f"""
                 Welcome back {name}!!!
                 Try: canvas --help to see all commands
@@ -104,14 +152,12 @@ def main() -> None:
         print("Try: canvas --login")
         return
         
-    
     try:
         if not run_command(command, argv):
             print(f"Unknown command: {command}")
             print("Try: canvas --help")
     except KeyboardInterrupt:
         print("\nExiting...")
-
 
 
 if __name__ == "__main__":
