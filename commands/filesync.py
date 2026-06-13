@@ -1,4 +1,6 @@
 from canvasapi.exceptions import Unauthorized
+from pathlib import Path
+
 from commands._sync_common import (
     is_ignored,
     prepare_sync,
@@ -8,6 +10,27 @@ from commands._sync_common import (
 
 
 HELP = "filesync command - Syncs all course files to your local directory"
+
+
+def _folder_relative_path(folder) -> Path:
+    """Return the Canvas folder path below the course root folder."""
+    full_name = getattr(folder, "full_name", "") or getattr(folder, "name", "")
+    parts = [part.strip() for part in str(full_name).replace("\\", "/").split("/") if part.strip()]
+
+    if parts and parts[0].lower() in {"course files", "files"}:
+        parts = parts[1:]
+
+    safe_parts = [sanitize_name(part) for part in parts if sanitize_name(part)]
+    return Path(*safe_parts) if safe_parts else Path()
+
+
+def _build_folder_paths(folders) -> dict[str, Path]:
+    return {
+        str(folder.id): _folder_relative_path(folder)
+        for folder in folders
+        if getattr(folder, "id", None) is not None
+    }
+
 
 def main(argv: list[str]) -> None:
     context = prepare_sync(argv)
@@ -28,12 +51,14 @@ def main(argv: list[str]) -> None:
         files_dir = sync_base / sanitize_name(course_name) / "Files"
 
         try:
-            files_dir.mkdir(parents=True, exist_ok=True)
+            folder_paths = _build_folder_paths(api.get_course_folders(course))
             files = api.get_course_files(course)
 
             for file in files:
+                folder_id = str(getattr(file, "folder_id", ""))
+                folder_path = folder_paths.get(folder_id, Path())
                 safe_file_name = sanitize_name(file.display_name)
-                file_path = files_dir / safe_file_name
+                file_path = files_dir / folder_path / safe_file_name
                 status = sync_file(file, file_path)
                 if status in stats:
                     stats[status] += 1

@@ -153,6 +153,8 @@ def prepare_sync(argv: list[str]):
 
 
 def sync_file(canvas_file, local_path: Path) -> str:
+    local_path.parent.mkdir(parents=True, exist_ok=True)
+
     if local_path.exists():
         local_size = local_path.stat().st_size
 

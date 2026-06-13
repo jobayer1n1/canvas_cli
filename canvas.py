@@ -54,8 +54,26 @@ def check_dependencies():
 check_dependencies()
 # ------------------------
 
-from api.canvas import get_api
 from utils.localAppData import LocalAppData
+
+
+def get_canvas_sync_directory() -> Path | None:
+    sync_data = LocalAppData().get_sync_directory()
+    if not sync_data or not sync_data.get("directory"):
+        return None
+
+    return Path(sync_data["directory"]) / "Canvas"
+
+
+def handle_no_args() -> None:
+    canvas_dir = get_canvas_sync_directory()
+    if canvas_dir is None:
+        print("set your sync folder")
+        return
+
+    canvas_dir.mkdir(parents=True, exist_ok=True)
+    os.chdir(canvas_dir)
+    print("Your are in your canvas folder")
 
 
 def run_command(command: str, argv: list[str]) -> bool:
@@ -121,20 +139,15 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
+    if len(sys.argv) == 2 and sys.argv[1] == "--print-canvas-dir":
+        canvas_dir = get_canvas_sync_directory()
+        if canvas_dir is not None:
+            canvas_dir.mkdir(parents=True, exist_ok=True)
+            print(canvas_dir)
+        return
+
     if len(sys.argv) == 1:
-        api = get_api()
-        if api is None or api.check_credentials() is None:
-            print("""
-                Thanks for using canvas-cli
-                Try: canvas --login to log in to your canvas account
-                """)
-        else:
-            user_data = LocalAppData().get_user_data()
-            name = user_data["NAME"] if user_data else "User"
-            print(f"""
-                Welcome back {name}!!!
-                Try: canvas --help to see all commands
-                """)
+        handle_no_args()
         return
 
     parser = build_parser()
@@ -147,7 +160,7 @@ def main() -> None:
         print("Try: canvas --help")
         return
 
-    if not LocalAppData().is_valid() and command != "login" and command != "help":
+    if not LocalAppData().is_valid() and command not in {"login", "help", "open"}:
         print("Please log in first")
         print("Try: canvas --login")
         return

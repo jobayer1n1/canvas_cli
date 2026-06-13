@@ -59,6 +59,14 @@ class CanvasAPI:
         files = target_course.get_files()
         return files
 
+    def get_course_folders(self, course: int | str | Course):
+        if isinstance(course, Course):
+            target_course = course
+        else:
+            target_course = self.canvas.get_course(course)
+        folders = target_course.get_folders()
+        return folders
+
     def get_course_modules(self, course: int | str | Course):
         if isinstance(course, Course):
             target_course = course

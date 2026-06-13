@@ -1,2 +1,3 @@
 canvasapi
 requests
+cryptography

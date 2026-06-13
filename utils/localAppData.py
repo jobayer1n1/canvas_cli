@@ -2,6 +2,7 @@ from pathlib import Path
 import os
 import json
 import sys
+from cryptography.fernet import Fernet, InvalidToken
 from canvasapi.exceptions import InvalidAccessToken
 
 
@@ -20,21 +21,49 @@ class LocalAppData:
         self.app_dir.mkdir(parents=True, exist_ok=True)
         
         self.user_data = self.app_dir / "user_data.txt"
+        self.token_key = self.app_dir / "token.key"
         self.sync_directory = self.app_dir / "sync_directory.txt"
         self.ignore_list = self.app_dir / "ignore_list.txt"
         self.course_index = self.app_dir / "course_index.txt"
 
     def save_user_data(self, user_data_to_add: dict[str, str]):
-        self.user_data.write_text(json.dumps(user_data_to_add), encoding="utf-8")
+        user_data = dict(user_data_to_add)
+        api_token = user_data.get("API_TOKEN")
+        if api_token:
+            user_data["API_TOKEN"] = self._encrypt_token(api_token)
+            user_data["API_TOKEN_ENCRYPTED"] = True
+        self.user_data.write_text(json.dumps(user_data), encoding="utf-8")
 
     def get_user_data(self):
         if self.user_data.exists():
-            return json.loads(self.user_data.read_text(encoding="utf-8"))
+            user_data = json.loads(self.user_data.read_text(encoding="utf-8"))
+            if not isinstance(user_data, dict):
+                return None
+
+            api_token = user_data.get("API_TOKEN")
+            if not api_token:
+                return user_data
+
+            if user_data.get("API_TOKEN_ENCRYPTED"):
+                decrypted_token = self._decrypt_token(api_token)
+                if decrypted_token is None:
+                    return None
+                user_data["API_TOKEN"] = decrypted_token
+                user_data.pop("API_TOKEN_ENCRYPTED", None)
+                return user_data
+
+            # Backward compatibility: migrate any legacy plaintext token to encrypted storage.
+            migrated_user_data = dict(user_data)
+            migrated_user_data["API_TOKEN"] = self._encrypt_token(api_token)
+            migrated_user_data["API_TOKEN_ENCRYPTED"] = True
+            self.user_data.write_text(json.dumps(migrated_user_data), encoding="utf-8")
+            return user_data
         return None
     
     def delete_user_data(self):
         if self.user_data.exists():
             self.user_data.unlink()
+            self.delete_token_key()
             return True
         return False
     
@@ -129,9 +158,34 @@ class LocalAppData:
             return True
         return False
 
+    def _get_token_key(self) -> bytes:
+        if self.token_key.exists():
+            return self.token_key.read_bytes()
+
+        key = Fernet.generate_key()
+        self.token_key.write_bytes(key)
+        return key
+
+    def _encrypt_token(self, token: str) -> str:
+        return Fernet(self._get_token_key()).encrypt(token.encode("utf-8")).decode("utf-8")
+
+    def _decrypt_token(self, token: str) -> str | None:
+        try:
+            decrypted_token = Fernet(self._get_token_key()).decrypt(token.encode("utf-8"))
+            return decrypted_token.decode("utf-8")
+        except (InvalidToken, OSError, ValueError):
+            return None
+
+    def delete_token_key(self):
+        if self.token_key.exists():
+            self.token_key.unlink()
+            return True
+        return False
+
     def reset_all(self):
         self.delete_user_data()
         self.delete_sync_directory()
         self.delete_ignore_list()
         self.delete_course_index()
+        self.delete_token_key()
         return True

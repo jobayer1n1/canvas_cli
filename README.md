@@ -8,7 +8,7 @@
 1. Login/logout and credential checks.
 2. List courses and view announcements.
 3. Configure a sync directory and course ignore list.
-4. Sync course files to `Canvas/<course name>/Files`.
+4. Sync course files to `Canvas/<course name>/Files/<Canvas folder structure>`.
 5. Sync course module to `Canvas/<course name>/Modules`.
 6. Instantly access your local canvas files.
 
