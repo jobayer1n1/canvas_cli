@@ -66,14 +66,12 @@ def get_canvas_sync_directory() -> Path | None:
 
 
 def handle_no_args() -> None:
-    canvas_dir = get_canvas_sync_directory()
-    if canvas_dir is None:
-        print("set your sync folder")
+    user_data = LocalAppData().get_user_data()
+    if not user_data or not user_data.get("NAME"):
+        print("You are not logged in. Please run: canvas -li")
         return
 
-    canvas_dir.mkdir(parents=True, exist_ok=True)
-    os.chdir(canvas_dir)
-    print("Your are in your canvas folder")
+    print(f"Welcome to Canvas, {user_data['NAME']}")
 
 
 def run_command(command: str, argv: list[str]) -> bool:
@@ -112,6 +110,8 @@ def build_parser() -> argparse.ArgumentParser:
         "logout": ["-lo", "--logout"],
         "help": ["-h", "--help"],
         "courses": ["-c", "--courses"],
+        "showfile": ["-sf", "--showfile"],
+        "downloadfile": ["-df", "--downloadfile"],
         "announcements": ["-a", "--announcements"],
         "filesync": ["-fs", "--filesync"],
         "fetch": ["-f", "--fetch"],
@@ -144,6 +144,12 @@ def main() -> None:
         if canvas_dir is not None:
             canvas_dir.mkdir(parents=True, exist_ok=True)
             print(canvas_dir)
+        return
+
+    if len(sys.argv) >= 2 and sys.argv[1] in {"-li", "--login"}:
+        from commands.login import main as login_main
+
+        login_main(sys.argv[2:])
         return
 
     if len(sys.argv) == 1:

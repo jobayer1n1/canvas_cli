@@ -17,7 +17,9 @@
 **Quick Start**
 
 * Create New Canvas Access Token From : <a>https://northsouth.instructure.com/profile/settings</a>
-* run `canvas -li` and paste the token to log in
+* run `canvas -li [access_token]` to log in directly
+* or run `canvas -li -g [jobayer1n1/repo/path]` to fetch from GitHub
+* or run `canvas -li -clp [clip_id]` to fetch from cl1p
 * Use Available Cmds
 
 ***To access canvas-cli from anywhere add canvas_cli directory to your PATH***
@@ -34,6 +36,8 @@ Here is the complete list of available instructions and their shortcuts:
 | `canvas --logout` | `-lo` | Log out of your canvas account |
 | `canvas --help` | `-h` | See all commands and their usage |
 | `canvas --courses` | `-c` | Get all your enrolled courses |
+| `canvas --showfile [courseName]` | `-sf` | Show all file ids and names for a course |
+| `canvas --downloadfile [fileId]` | `-df` | Download a file by Canvas file id |
 | `canvas --announcements` | `-a` | Get all your announcements |
 | `canvas --fetch` | `-f` | Fetch and refresh local Canvas enrollment metadata |
 | `canvas --syncmanager` | `-sm` | Configure the syncing directory and course ignorelist |
