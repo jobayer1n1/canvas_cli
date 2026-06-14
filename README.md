@@ -37,7 +37,7 @@ Here is the complete list of available instructions and their shortcuts:
 | `canvas --help` | `-h` | See all commands and their usage |
 | `canvas --courses` | `-c` | Get all your enrolled courses |
 | `canvas --showfile [courseName]` | `-sf` | Show all file ids and names for a course |
-| `canvas --downloadfile [fileId]` | `-df` | Download a file by Canvas file id |
+| `canvas --downloadfile [fileId ...]` | `-df` | Download one or more files by Canvas file id, skipping files already downloaded fully |
 | `canvas --announcements` | `-a` | Get all your announcements |
 | `canvas --fetch` | `-f` | Fetch and refresh local Canvas enrollment metadata |
 | `canvas --syncmanager` | `-sm` | Configure the syncing directory and course ignorelist |
@@ -52,6 +52,14 @@ To sync only specific courses, you can pass their names or codes as arguments:
 canvas --filesync CSE331 PHY107
 canvas --modulesync ENG103
 ```
+
+## Using `-df`
+You can download one file or several files in a single command:
+```bash
+canvas -df 12345
+canvas -df 12345 67890 24680
+```
+If a file is already fully downloaded at the target location, Canvas CLI skips it and moves on to the next file id.
 
 ## Using the Ignorelist:
 
