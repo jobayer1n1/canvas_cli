@@ -4,28 +4,14 @@ from pathlib import Path
 
 from canvasapi.exceptions import Forbidden, ResourceDoesNotExist, Unauthorized
 
-from commands._sync_common import prepare_sync, sanitize_name, sync_file
+from commands._sync_common import (
+    build_course_file_path,
+    build_folder_paths,
+    perform_download,
+    prepare_sync,
+)
 
 HELP = "download a canvas file by file id"
-
-
-def _folder_relative_path(folder) -> Path:
-    full_name = getattr(folder, "full_name", "") or getattr(folder, "name", "")
-    parts = [part.strip() for part in str(full_name).replace("\\", "/").split("/") if part.strip()]
-
-    if parts and parts[0].lower() in {"course files", "files"}:
-        parts = parts[1:]
-
-    safe_parts = [sanitize_name(part) for part in parts if sanitize_name(part)]
-    return Path(*safe_parts) if safe_parts else Path()
-
-
-def _build_folder_paths(folders) -> dict[str, Path]:
-    return {
-        str(folder.id): _folder_relative_path(folder)
-        for folder in folders
-        if getattr(folder, "id", None) is not None
-    }
 
 
 def _find_course_file(api, course, file_id: int):
@@ -36,13 +22,6 @@ def _find_course_file(api, course, file_id: int):
         except (TypeError, ValueError):
             continue
     return None
-
-
-def _build_local_path(sync_base: Path, course_name: str, canvas_file, folder_paths: dict[str, Path]) -> Path:
-    folder_id = str(getattr(canvas_file, "folder_id", ""))
-    folder_path = folder_paths.get(folder_id, Path())
-    safe_file_name = sanitize_name(canvas_file.display_name)
-    return sync_base / sanitize_name(course_name) / "Files" / folder_path / safe_file_name
 
 
 def main(argv: list[str]) -> None:
@@ -80,17 +59,49 @@ def main(argv: list[str]) -> None:
                     if canvas_file is None:
                         continue
 
-                    folder_paths = _build_folder_paths(api.get_course_folders(course))
-                    local_path = _build_local_path(sync_base, course_name, canvas_file, folder_paths)
+                    folder_paths = build_folder_paths(api.get_course_folders(course))
+                    local_path = build_course_file_path(sync_base, course_name, canvas_file, folder_paths)
 
-                    print(f"Downloading [{canvas_file.id}] {canvas_file.display_name}")
-                    status = sync_file(canvas_file, local_path)
+                    if local_path.exists() and local_path.stat().st_size == canvas_file.size:
+                        print(f"  [Skipped] {canvas_file.display_name} [FileFound]")
+                        stats["skipped"] += 1
+                        found = True
+                        break
+
+                    is_resume = local_path.exists() and local_path.stat().st_size < canvas_file.size
+                    if is_resume:
+                        print(f"  [OnGoing] {canvas_file.display_name} [resumeDownloading]", end="", flush=True)
+                        status = perform_download(canvas_file, local_path, resume=True, verbose=False)
+                        if status == "downloaded":
+                            print(" [downloaded]")
+                            stats["downloaded"] += 1
+                            found = True
+                            break
+
+                        print(" [resumeFailed] [freshDownload]", end="", flush=True)
+                        try:
+                            local_path.unlink()
+                        except OSError:
+                            pass
+
+                        status = perform_download(canvas_file, local_path, resume=False, verbose=False)
+                        if status == "downloaded":
+                            print(" [downloaded]")
+                            stats["downloaded"] += 1
+                        else:
+                            print(" [error]")
+                            stats["error"] += 1
+                        found = True
+                        break
+
+                    print(f"  [OnGoing] {canvas_file.display_name} [downloading]", end="", flush=True)
+                    status = perform_download(canvas_file, local_path, resume=False, verbose=False)
                     if status == "downloaded":
-                        print(f"Saved to {local_path}")
-                    elif status == "skipped":
-                        print(f"Already up to date: {local_path}")
-                    if status in stats:
-                        stats[status] += 1
+                        print(" [downloaded]")
+                        stats["downloaded"] += 1
+                    else:
+                        print(" [error]")
+                        stats["error"] += 1
                     found = True
                     break
                 except (Unauthorized, ResourceDoesNotExist, Forbidden) as exc:

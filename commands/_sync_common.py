@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 from pathlib import Path
 
@@ -68,6 +69,68 @@ def is_ignored(course, ignore_set: set[str]) -> bool:
         or (course_code and normalize_code(course_code) in ignore_set)
         or (short_name and normalize_code(short_name) in ignore_set)
     )
+
+
+def _folder_relative_path(folder) -> Path:
+    """Return the Canvas folder path below the course root folder."""
+    full_name = getattr(folder, "full_name", "") or getattr(folder, "name", "")
+    parts = [part.strip() for part in str(full_name).replace("\\", "/").split("/") if part.strip()]
+
+    if parts and parts[0].lower() in {"course files", "files"}:
+        parts = parts[1:]
+
+    safe_parts = [sanitize_name(part) for part in parts if sanitize_name(part)]
+    return Path(*safe_parts) if safe_parts else Path()
+
+
+def build_folder_paths(folders) -> dict[str, Path]:
+    return {
+        str(folder.id): _folder_relative_path(folder)
+        for folder in folders
+        if getattr(folder, "id", None) is not None
+    }
+
+
+def build_course_files_dir(sync_base: Path, course_name: str) -> Path:
+    return sync_base / sanitize_name(course_name) / "Files"
+
+
+def build_course_file_path(sync_base: Path, course_name: str, canvas_file, folder_paths: dict[str, Path]) -> Path:
+    folder_id = str(getattr(canvas_file, "folder_id", ""))
+    folder_path = folder_paths.get(folder_id, Path())
+    safe_file_name = sanitize_name(canvas_file.display_name)
+    return build_course_files_dir(sync_base, course_name) / folder_path / safe_file_name
+
+
+def create_symlink(link_path: Path, target_path: Path, *, verbose: bool = True) -> str:
+    link_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if link_path.exists() or link_path.is_symlink():
+        try:
+            if link_path.is_symlink() and link_path.resolve() == target_path.resolve():
+                if verbose:
+                    print(f"  [Skipped] {link_path.name} already points to cached file")
+                return "already_linked"
+        except OSError:
+            pass
+
+        if link_path.is_dir() and not link_path.is_symlink():
+            if verbose:
+                print(f"  [Error] Cannot replace directory with symlink: {link_path}")
+            return "error"
+
+        link_path.unlink()
+
+    try:
+        relative_target = os.path.relpath(target_path, start=link_path.parent)
+        os.symlink(relative_target, link_path)
+        if verbose:
+            print(f"  [Linked] {link_path.name} -> {target_path}")
+        return "linked"
+    except Exception as exc:
+        if verbose:
+            print(f"  [Error] Could not create symlink for {link_path.name}: {exc}")
+        return "error"
 
 
 def resolve_target_codes_from_index(query: str, index_data: dict | None) -> set[str]:
@@ -147,26 +210,32 @@ def prepare_sync(argv: list[str]):
         print("No requested courses are currently active. use --fetch to update the enrollment course list")
         return None
 
-    pretty_codes = ", ".join(sorted(requested_target_codes))
-    print(f"Resolved requested courses from local storage: {pretty_codes}")
     return api, sync_base, target_courses, ignore_set, queries
 
 
-def sync_file(canvas_file, local_path: Path) -> str:
+def sync_file(canvas_file, local_path: Path, *, verbose: bool = True) -> str:
     local_path.parent.mkdir(parents=True, exist_ok=True)
 
     if local_path.exists():
         local_size = local_path.stat().st_size
 
         if local_size == canvas_file.size:
-            print(f"  [Skipped] {canvas_file.display_name} (Up to date)")
+            if verbose:
+                print(f"  [Skipped] {canvas_file.display_name} (Up to date)")
             return "skipped"
         if local_size < canvas_file.size:
-            return perform_download(canvas_file, local_path, resume=True)
-    return perform_download(canvas_file, local_path, resume=False)
+            status = perform_download(canvas_file, local_path, resume=True, verbose=verbose)
+            if status == "error":
+                try:
+                    local_path.unlink()
+                except OSError:
+                    pass
+                return perform_download(canvas_file, local_path, resume=False, verbose=verbose)
+            return status
+    return perform_download(canvas_file, local_path, resume=False, verbose=verbose)
 
 
-def perform_download(canvas_file, local_path: Path, resume: bool = False) -> str:
+def perform_download(canvas_file, local_path: Path, resume: bool = False, *, verbose: bool = True) -> str:
     headers = {}
     mode = "wb"
     verb = "Downloading"
@@ -177,12 +246,14 @@ def perform_download(canvas_file, local_path: Path, resume: bool = False) -> str
         mode = "ab"
         verb = "Resuming"
 
-    print(f"  [{verb}] {canvas_file.display_name}... ", end="", flush=True)
+    if verbose:
+        print(f"  [{verb}] {canvas_file.display_name}... ", end="", flush=True)
 
     try:
         with requests.get(canvas_file.url, headers=headers, stream=True, timeout=30) as r:
             if resume and r.status_code != 206:
-                print("    (Resume not supported by server, re-downloading...)")
+                if verbose:
+                    print("    (Resume not supported by server, re-downloading...)")
                 mode = "wb"
 
             r.raise_for_status()
@@ -192,9 +263,11 @@ def perform_download(canvas_file, local_path: Path, resume: bool = False) -> str
                     if chunk:
                         f.write(chunk)
 
-        print("[Done]")
+        if verbose:
+            print("[Done]")
         return "downloaded"
 
     except Exception as e:
-        print(f"Failed: {e}")
+        if verbose:
+            print(f"Failed: {e}")
         return "error"

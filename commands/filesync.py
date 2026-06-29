@@ -1,35 +1,15 @@
 from canvasapi.exceptions import Unauthorized
-from pathlib import Path
 
 from commands._sync_common import (
+    build_course_file_path,
+    build_folder_paths,
     is_ignored,
     prepare_sync,
-    sanitize_name,
-    sync_file,
+    perform_download,
 )
 
 
 HELP = "filesync command - Syncs all course files to your local directory"
-
-
-def _folder_relative_path(folder) -> Path:
-    """Return the Canvas folder path below the course root folder."""
-    full_name = getattr(folder, "full_name", "") or getattr(folder, "name", "")
-    parts = [part.strip() for part in str(full_name).replace("\\", "/").split("/") if part.strip()]
-
-    if parts and parts[0].lower() in {"course files", "files"}:
-        parts = parts[1:]
-
-    safe_parts = [sanitize_name(part) for part in parts if sanitize_name(part)]
-    return Path(*safe_parts) if safe_parts else Path()
-
-
-def _build_folder_paths(folders) -> dict[str, Path]:
-    return {
-        str(folder.id): _folder_relative_path(folder)
-        for folder in folders
-        if getattr(folder, "id", None) is not None
-    }
 
 
 def main(argv: list[str]) -> None:
@@ -48,20 +28,51 @@ def main(argv: list[str]) -> None:
             continue
 
         print(f"\n--- Syncing: {course_name} ---")
-        files_dir = sync_base / sanitize_name(course_name) / "Files"
 
         try:
-            folder_paths = _build_folder_paths(api.get_course_folders(course))
+            folder_paths = build_folder_paths(api.get_course_folders(course))
             files = api.get_course_files(course)
 
             for file in files:
-                folder_id = str(getattr(file, "folder_id", ""))
-                folder_path = folder_paths.get(folder_id, Path())
-                safe_file_name = sanitize_name(file.display_name)
-                file_path = files_dir / folder_path / safe_file_name
-                status = sync_file(file, file_path)
-                if status in stats:
-                    stats[status] += 1
+                file_path = build_course_file_path(sync_base, course_name, file, folder_paths)
+
+                if file_path.exists() and file_path.stat().st_size == file.size:
+                    print(f"  [Skipped] {file.display_name} [FileFound]")
+                    stats["skipped"] += 1
+                    continue
+
+                is_resume = file_path.exists() and file_path.stat().st_size < file.size
+                if is_resume:
+                    print(f"  [OnGoing] {file.display_name} [resumeDownloading]", end="", flush=True)
+                    status = perform_download(file, file_path, resume=True, verbose=False)
+                    if status == "downloaded":
+                        print(" [downloaded]")
+                        stats["downloaded"] += 1
+                        continue
+
+                    print(" [resumeFailed] [freshDownload]", end="", flush=True)
+                    try:
+                        file_path.unlink()
+                    except OSError:
+                        pass
+
+                    status = perform_download(file, file_path, resume=False, verbose=False)
+                    if status == "downloaded":
+                        print(" [downloaded]")
+                        stats["downloaded"] += 1
+                    else:
+                        print(" [error]")
+                        stats["error"] += 1
+                    continue
+
+                print(f"  [OnGoing] {file.display_name} [downloading]", end="", flush=True)
+                status = perform_download(file, file_path, resume=False, verbose=False)
+                if status == "downloaded":
+                    print(" [downloaded]")
+                    stats["downloaded"] += 1
+                else:
+                    print(" [error]")
+                    stats["error"] += 1
 
         except (Unauthorized, Exception) as e:
             if type(e).__name__ in ("Unauthorized", "ResourceDoesNotExist", "Forbidden"):

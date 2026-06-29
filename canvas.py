@@ -139,6 +139,16 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
+    if len(sys.argv) == 2 and sys.argv[1] in {"-scwd", "--switch-current-working-directory"}:
+        canvas_dir = get_canvas_sync_directory()
+        if canvas_dir is None:
+            print("Sync directory is not set. Please set it using canvas --syncmanager.")
+            return
+
+        canvas_dir.mkdir(parents=True, exist_ok=True)
+        print(canvas_dir)
+        return
+
     if len(sys.argv) == 2 and sys.argv[1] == "--print-canvas-dir":
         canvas_dir = get_canvas_sync_directory()
         if canvas_dir is not None:
