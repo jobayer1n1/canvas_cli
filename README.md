@@ -11,7 +11,7 @@
 4. Sync course files to `Canvas/<course name>/Files/<Canvas folder structure>`.
 5. Sync course modules to `Canvas/<course name>/Modules`, while keeping the real file data in `Files/` and linking modules back to it.
 6. Download single files by Canvas file id.
-7. Switch the current terminal working directory to the Canvas sync directory.
+7. Switch the current terminal working directory to the Canvas sync directory, course folder, Files folder, or Modules folder.
 8. Instantly access your local canvas files.
 
 ---
@@ -45,7 +45,7 @@ Here is the complete list of available instructions and their shortcuts:
 | `canvas --syncmanager` | `-sm` | Configure the syncing directory and course ignorelist |
 | `canvas --filesync [courses...]` | `-fs` | Syncs all not ignored (or specified) course files to your local directory |
 | `canvas --modulesync [courses...]` | `-ms` | Syncs all not ignored (or specified) course modules to your local directory using shared file links |
-| `canvas --switch-current-working-directory` | `-scwd` | Switches the current shell directory to the Canvas sync directory |
+| `canvas --switch-current-working-directory` | `-scwd` | Switches the current shell directory to a Canvas course, Files, or Modules folder |
 | `canvas --open` | `-o` | Opens the local Canvas sync directory |
 | `canvas --reset` | `-r` | Reset all configurations and data |
 
@@ -118,16 +118,24 @@ Works for both files and modules.
 ### Windows cmd
 Use the batch launcher so the current terminal directory changes in place:
 ```bat
-canvas -scwd
+canvas -scwd CSE331 -f
 ```
 
 ### Linux bash/zsh
 Source the shell helper once in your session, then run the same command:
 ```bash
 source /path/to/canvas_cli/canvas.sh
-canvas -scwd
+canvas -scwd CSE331 -m
 ```
 
 If the sync directory is not configured yet, run `canvas --syncmanager` first.
+
+Examples:
+```bash
+canvas -scwd CSE331
+canvas -scwd CSE331 -f
+canvas -scwd CSE331 -m
+canvas -scwd CSE331 -m Week 1
+```
 
 ---

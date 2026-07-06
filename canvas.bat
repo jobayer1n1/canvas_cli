@@ -12,7 +12,7 @@ python "%~dp0canvas.py" %*
 goto :eof
 
 :switch_cwd
-for /f "usebackq delims=" %%i in (`python "%~dp0canvas.py" --switch-current-working-directory`) do set "CANVAS_SYNC_DIR=%%i"
+for /f "usebackq delims=" %%i in (`python "%~dp0canvas.py" %*`) do set "CANVAS_SYNC_DIR=%%i"
 if not defined CANVAS_SYNC_DIR goto :eof
 if not exist "%CANVAS_SYNC_DIR%" mkdir "%CANVAS_SYNC_DIR%"
 cd /d "%CANVAS_SYNC_DIR%"

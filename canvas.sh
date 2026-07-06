@@ -8,7 +8,7 @@ canvas() {
     script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
     if [[ "${1:-}" == "-scwd" || "${1:-}" == "--switch-current-working-directory" ]]; then
-        canvas_dir="$(python3 "$script_dir/canvas.py" --switch-current-working-directory)" || return $?
+        canvas_dir="$(python3 "$script_dir/canvas.py" "$@")" || return $?
         if [[ -z "$canvas_dir" ]]; then
             return 1
         fi
