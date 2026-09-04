@@ -45,6 +45,8 @@ Here is the complete list of available instructions and their shortcuts:
 | `canvas --syncmanager` | `-sm` | Configure the syncing directory and course ignorelist |
 | `canvas --filesync [courses...]` | `-fs` | Syncs all not ignored (or specified) course files to your local directory |
 | `canvas --modulesync [courses...]` | `-ms` | Syncs all not ignored (or specified) course modules to your local directory using shared file links |
+| `canvas --export [courses...]` | `-e` | Creates shareable `.canvas` archives without duplicating files |
+| `canvas --import [files...]` | `-i` | Imports `.canvas` archives and recreates module links |
 | `canvas --switch-current-working-directory` | `-scwd` | Switches the current shell directory to a Canvas course, Files, or Modules folder |
 | `canvas --open` | `-o` | Opens the local Canvas sync directory |
 | `canvas --reset` | `-r` | Reset all configurations and data |
@@ -75,6 +77,28 @@ This means:
 - `filesync` writes the real file into `Files/`
 - `downloadfile` writes the real file into `Files/`
 - `modulesync` creates a module entry that points to the cached file
+
+## Exporting a Course
+
+Export one or more synced courses into `Canvas/Exports`:
+```bash
+canvas -e CSE332 CSE327
+```
+
+This creates `CSE332.canvas` and `CSE327.canvas`. Each `.canvas` file is a ZIP-based
+archive containing the course `Files/` directory once and `metadata.json`.
+The JSON stores the course metadata and the module directory structure and
+symlink targets under `modules`, so a future `--import` command can recreate
+`Modules/` without copying the file data a second time.
+
+Import one or more archives into `Canvas/Imports`:
+```bash
+canvas -i downloads/CSE332.canvas downloads/CSE331.canvas
+```
+
+Each archive creates `Canvas/Imports/<course>` with `Files/`, `Modules/`, and the
+original `metadata.json`. Existing course directories with the same name are
+replaced during import.
 
 ## Sync Output
 The sync commands now use a staged progress format:

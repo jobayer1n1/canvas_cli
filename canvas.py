@@ -117,6 +117,8 @@ def build_parser() -> argparse.ArgumentParser:
         "fetch": ["-f", "--fetch"],
         "syncmanager": ["-sm", "--syncmanager"],
         "modulesync": ["-ms", "--modulesync"],
+        "export": ["-e", "--export"],
+        "import": ["-i", "--import"],
         "reset": ["-r", "--reset"],
         "open": ["-o", "--open"],
         "scwd": ["-scwd", "--switch-current-working-directory"],
@@ -167,7 +169,7 @@ def main() -> None:
         print("Try: canvas --help")
         return
 
-    if not LocalAppData().is_valid() and command not in {"login", "help", "open", "scwd"}:
+    if not LocalAppData().is_valid() and command not in {"login", "help", "open", "scwd", "export", "import"}:
         print("Please log in first")
         print("Try: canvas --login")
         return
