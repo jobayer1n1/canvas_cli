@@ -24,7 +24,10 @@
 * or run `canvas -li -clp [clip_id]` to fetch from cl1p
 * Use Available Cmds
 
-***To access canvas-cli from anywhere add canvas_cli directory to your PATH***
+To install the Python packages and make `canvas` available from any new Windows
+terminal, run `setup.bat` from this directory. The script adds this directory to
+your user `PATH` without removing existing entries. Restart open terminals after
+setup so they receive the updated `PATH`.
 
 ---
 
