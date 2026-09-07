@@ -83,25 +83,36 @@ This means:
 
 ## Exporting a Course
 
-Export one or more synced courses into `Canvas/Exports`:
+Export a synced course into `Canvas/Exports`:
 ```bash
-canvas -e CSE332 CSE327
+canvas -e CSE332
 ```
 
-This creates `CSE332.canvas` and `CSE327.canvas`. Each `.canvas` file is a ZIP-based
-archive containing the course `Files/` directory once and `metadata.json`.
-The JSON stores the course metadata and the module directory structure and
-symlink targets under `modules`, so a future `--import` command can recreate
-`Modules/` without copying the file data a second time.
+This creates `CSE332.canvas`, containing `metadata.bin` and a compressed
+`CSE332.zip`. The course ZIP contains `CSE332/Files/`; module directories and
+symlink targets are recorded in the metadata so import can recreate `Modules/`
+without copying file data a second time.
 
-Import one or more archives into `Canvas/Imports`:
+Use a custom output name and password when needed:
 ```bash
-canvas -i downloads/CSE332.canvas downloads/CSE331.canvas
+canvas -e CSE332 -n new -p "password"
+canvas -e CSE332 CSE327 -n semester -p "password"
 ```
 
-Each archive creates `Canvas/Imports/<course>` with `Files/`, `Modules/`, and the
-original `metadata.json`. Existing course directories with the same name are
-replaced during import.
+Multiple-course exports require `--name`. With `--password`, metadata and every
+course ZIP are encrypted with scrypt-derived AES-GCM keys. Without it, the
+export is unencrypted but still includes integrity hashes.
+
+Import an archive into `Canvas/Imports`:
+```bash
+canvas -i downloads/new.canvas
+canvas -i downloads/new.canvas -p "password"
+```
+
+Encrypted archives prompt for a password when `-p` is omitted. Import
+authenticates metadata and verifies each course archive before extracting it.
+Each course creates `Canvas/Imports/<course>` with `Files/`, `Modules/`, and
+`metadata.json`; existing course directories with the same name are replaced.
 
 ## Sync Output
 The sync commands now use a staged progress format:
